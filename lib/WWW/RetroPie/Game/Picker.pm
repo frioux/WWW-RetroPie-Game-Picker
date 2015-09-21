@@ -103,12 +103,13 @@ sub dispatch_request {
                io->file($dir, $system, $game)->name;
 
                return $self->_forbidden
-                  if $game =~ m(/) || !-f $path;
+                  if $game =~ m(/) || !-e $path;
 
             '/unpick' => sub {
 
                return $self->_err('unexpected symlink!')
-                  unless readlink $path eq io->file($self->_config->real_roms_dir, $system, $game)->name;
+                  if !-l $path ||
+                     readlink $path ne io->file($self->_config->real_roms_dir, $system, $game)->name;
 
                try {
                   unlink $path;
