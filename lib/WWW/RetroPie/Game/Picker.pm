@@ -35,11 +35,21 @@ sub dispatch_request {
          return $self->_forbidden unless $system =~ m/^[\w]+$/;
 
          '/' => sub {
+            my %links =
+               map { readlink $_ => 1 }
+               grep -l $_,
+               map "$_",
+               io->dir($self->_config->retropie_roms_dir, $system)->all;
             my $html =
                join "\n",
-               map qq(<li>$_ [<a href="/all/$system/$_/pick">Pick</a>]</li>),
-               map $_->filename,
-               io->dir($self->_config->real_roms_dir, $system)->all;
+               map {
+                  my $fn = $_->filename;
+                  "<li>$fn [" . (
+                     $links{$_->name}
+                        ? '<strike>Pick</strike>'
+                        : qq(<a href="/all/$system/$fn/pick">Pick</a>)
+                  ) . ']</li>'
+               } io->dir($self->_config->real_roms_dir, $system)->all;
 
             return [ 200, [ content_type => 'text/html' ], [ "<html><ul>$html</ul></html>" ] ]
          },
