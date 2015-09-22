@@ -125,7 +125,7 @@ sub dispatch_request {
       '/' => sub {
          my $html =
             join "\n",
-            map qq(<li><a href="/selected/$_">$_</a></li>),
+            map qq(<li><a href="/selected/$_/">$_</a></li>),
             map $_->filename,
             io->dir($self->_config->retropie_roms_dir)->all;
 
