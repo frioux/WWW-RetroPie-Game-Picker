@@ -132,6 +132,9 @@ sub dispatch_request {
          return [ 200, [ content_type => 'text/html' ], [ "<html><ul>$html</ul></html>" ] ]
       },
    },
+   '/' => sub {
+      return [ 200, [ content_type => 'text/html' ], [ q(<html><a href="/all/">all roms</a><br /><br /><a href="/selected/">selected roms</a></html>) ] ]
+   },
 }
 
 1;
