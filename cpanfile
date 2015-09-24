@@ -1,5 +1,5 @@
 requires 'IO::All';
-requires 'JSON::XS';
+requires 'Cpanel::JSON::XS';
 requires 'namespace::clean';
 requires 'Web::Simple';
 requires 'Text::Xslate';
