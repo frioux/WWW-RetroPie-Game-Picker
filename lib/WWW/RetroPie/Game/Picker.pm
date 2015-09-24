@@ -148,6 +148,15 @@ sub dispatch_request {
                };
             },
 
+            '/delete' => sub {
+               try {
+                  unlink $path;
+
+                  return $self->_redir("/selected/$system/", 'Success!')
+               } catch {
+                  return $self->_err("Fail: $_");
+               };
+            },
          },
       },
       '/' => sub {
