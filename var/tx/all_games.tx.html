@@ -1,0 +1,17 @@
+<html>
+<body>
+   <ul>
+      :  for $games -> $game {
+      <li>
+         <: $game.name :> [
+            : if $game.linked {
+               <strike>Pick</strike>
+            : } else {
+               <a href="/all/<: $system :>/<: $game.name :>/pick">Unpick</a>
+            : }
+         ]
+      </li>
+      : }
+   </ul>
+</body>
+</html>

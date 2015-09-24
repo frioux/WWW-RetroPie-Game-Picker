@@ -6,6 +6,7 @@ use warnings NONFATAL => 'all';
 use autodie;
 
 use IO::All;
+use Text::Xslate;
 
 use WWW::RetroPie::Game::Picker::ConfigLoader;
 
@@ -26,6 +27,26 @@ sub _err { [ 500, [ content_type => 'text/html' ], [ $_[1] ]] }
 sub _forbidden { [ 403, [ content_type => 'text/html' ], [ $_[1] ]] }
 sub _conflict { [ 409, [ content_type => 'text/html' ], [ $_[1] ]] }
 
+has _xslate => (
+   is => 'ro',
+   lazy => 1,
+   default => sub {
+      Text::Xslate->new(
+         path => ['var/tx'],
+         type => 'text',
+      )
+   },
+   handles => {
+      _tx => 'render',
+   },
+);
+
+sub _html_200 {
+   my ($self, $t, $vars) = @_;
+
+   [ 200, [ content_type => 'text/html' ], [ $self->_tx("$t.tx.html", $vars) ] ]
+}
+
 sub dispatch_request {
    my $self = shift;
    '/all/...' => sub {
@@ -40,18 +61,16 @@ sub dispatch_request {
                grep -l $_,
                map "$_",
                io->dir($self->_config->retropie_roms_dir, $system)->all;
-            my $html =
-               join "\n",
-               map {
-                  my $fn = $_->filename;
-                  "<li>$fn [" . (
-                     $links{$_->name}
-                        ? '<strike>Pick</strike>'
-                        : qq(<a href="/all/$system/$fn/pick">Pick</a>)
-                  ) . ']</li>'
-               } io->dir($self->_config->real_roms_dir, $system)->all;
 
-            return [ 200, [ content_type => 'text/html' ], [ "<html><ul>$html</ul></html>" ] ]
+            my @games = map +{
+               name => $_->filename,
+               linked => $links{$_->name}
+            }, io->dir($self->_config->real_roms_dir, $system)->all;
+
+            $self->_html_200('all_games', {
+               system => $system,
+               games => \@games,
+            })
          },
          '/*/...' => sub {
             my ($game) = $_[1];
@@ -80,13 +99,11 @@ sub dispatch_request {
          },
       },
       '/' => sub {
-         my $html =
-            join "\n",
-            map qq(<li><a href="/all/$_/">$_</a></li>),
+         my @systems =
             map $_->filename,
             io->dir($self->_config->real_roms_dir)->all;
 
-         return [ 200, [ content_type => 'text/html' ], [ "<html><ul>$html</ul></html>" ] ]
+         $self->_html_200('all_systems', { systems => \@systems })
       },
    },
    '/selected/...' => sub {
@@ -98,13 +115,14 @@ sub dispatch_request {
          return $self->_forbidden unless $system =~ m/^[\w]+$/;
 
          '/' => sub {
-            my $html =
-               join "\n",
-               map qq(<li>$_ [<a href="/selected/$system/$_/unpick">Unpick</a>]</li>),
+            my @games =
                map $_->filename,
                io->dir($dir, $system)->all;
 
-            return [ 200, [ content_type => 'text/html' ], [ "<html><ul>$html</ul></html>" ] ]
+            $self->_html_200('selected_games', {
+               games => \@games,
+               system => $system,
+            });
          },
          '/*/...' => sub {
             my ($game) = $_[1];
@@ -133,18 +151,14 @@ sub dispatch_request {
          },
       },
       '/' => sub {
-         my $html =
-            join "\n",
-            map qq(<li><a href="/selected/$_/">$_</a></li>),
+         my @systems =
             map $_->filename,
             io->dir($self->_config->retropie_roms_dir)->all;
 
-         return [ 200, [ content_type => 'text/html' ], [ "<html><ul>$html</ul></html>" ] ]
+         $self->_html_200('selected_systems', { systems => \@systems })
       },
    },
-   '/' => sub {
-      return [ 200, [ content_type => 'text/html' ], [ q(<html><a href="/all/">all roms</a><br /><br /><a href="/selected/">selected roms</a></html>) ] ]
-   },
+   '/' => sub { $self->_html_200('index') },
 }
 
 1;

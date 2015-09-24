@@ -1,0 +1,13 @@
+<html>
+<body>
+   <ul>
+      :  for $games -> $game {
+      <li>
+         <: $game :> [
+            <a href="/selected/<: $system :>/<: $game :>/unpick">Unpick</a>
+         ]
+      </li>
+      : }
+   </ul>
+</body>
+</html>
