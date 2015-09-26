@@ -7,15 +7,14 @@ use autodie;
 
 use IO::All;
 use Text::Xslate;
-
-use WWW::RetroPie::Game::Picker::ConfigLoader;
+use Config::Station;
 
 sub to_app { shift->to_psgi_app(@_) }
 
 has _config => (
    is => 'ro',
    default => sub {
-      WWW::RetroPie::Game::Picker::ConfigLoader->new(
+      Config::Station->new(
          env_key => 'RPGP',
          config_class => 'WWW::RetroPie::Game::Picker::Config',
       )->load
