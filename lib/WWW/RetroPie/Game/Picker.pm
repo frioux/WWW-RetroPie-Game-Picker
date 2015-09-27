@@ -65,7 +65,7 @@ sub dispatch_request {
             my @games = map +{
                name => $_,
                linked => $links{"$sysdir/$_"}
-            }, $sysdir->readdir;
+            }, sort $sysdir->readdir;
 
             $self->_html_200('all_games', {
                system => $system,
