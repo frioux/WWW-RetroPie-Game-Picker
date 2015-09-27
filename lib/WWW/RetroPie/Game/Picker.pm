@@ -8,6 +8,7 @@ use autodie;
 use IO::All;
 use Text::Xslate;
 use Config::Station;
+use HTML::Zoom;
 
 sub to_app { shift->to_psgi_app(@_) }
 
@@ -66,10 +67,34 @@ sub dispatch_request {
                linked => $links{$_->name}
             }, io->dir($self->_config->real_roms_dir, $system)->all;
 
-            $self->_html_200('all_games', {
-               system => $system,
-               games => \@games,
-            })
+            my $template = <<'HTML';
+<html>
+<body>
+   <ul>
+      <li id="games">
+         <span class="game"></span> [
+            <a class="unpick">Unpick</a>
+         ]
+      </li>
+   </ul>
+</body>
+</html>
+HTML
+            my $fh = HTML::Zoom->from_html($template)
+               ->select('#games')
+               ->repeat_content([
+                  map {
+                     my $game = $_;
+                     sub {
+                        $_->select('.name')->replace_content($game->{name});
+                        $_->select('.unpick')->add_to_attribute(
+                           href => "/selected/$system/$game->{name}/pick"
+                        );
+                     }
+                  } @games
+               ])
+               ->to_fh;
+            [200, [content_type => 'text/html'], $fh ]
          },
          '/*/...' => sub {
             my ($game) = $_[1];
