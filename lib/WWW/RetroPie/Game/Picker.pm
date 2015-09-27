@@ -54,16 +54,18 @@ sub dispatch_request {
 
          return $self->_forbidden unless $system =~ m/^[\w]+$/;
 
+         my $sysdir = io->dir($self->_config->real_roms_dir, $system);
          '/' => sub {
             my %links =
                map { $_->readlink => 1 }
                grep $_->is_link,
                io->dir($self->_config->retropie_roms_dir, $system)->all;
 
+            my $sysdir_path = $sysdir->name;
             my @games = map +{
-               name => $_->filename,
-               linked => $links{$_->name}
-            }, io->dir($self->_config->real_roms_dir, $system)->all;
+               name => $_,
+               linked => $links{"$sysdir/$_"}
+            }, $sysdir->readdir;
 
             $self->_html_200('all_games', {
                system => $system,
