@@ -56,9 +56,8 @@ sub dispatch_request {
 
          '/' => sub {
             my %links =
-               map { readlink $_ => 1 }
-               grep -l $_,
-               map "$_",
+               map { $_->readlink => 1 }
+               grep $_->is_link,
                io->dir($self->_config->retropie_roms_dir, $system)->all;
 
             my @games = map +{
